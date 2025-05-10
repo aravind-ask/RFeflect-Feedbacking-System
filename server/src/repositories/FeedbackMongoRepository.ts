@@ -16,4 +16,15 @@ export class FeedbackMongoRepository implements IFeedbackRepository {
   ): Promise<IFeedback | null> {
     return Feedback.findByIdAndUpdate(id, data, { new: true });
   }
+
+  async findByReceiverId(
+    receiverId: string,
+    tenantId: string
+  ): Promise<IFeedback[]> {
+    return Feedback.find({
+      receiverId,
+      tenantId,
+      recalledAt: { $exists: false },
+    });
+  }
 }

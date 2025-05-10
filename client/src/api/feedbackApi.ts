@@ -1,6 +1,6 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { baseQuery } from './baseQuery';
-import { IFeedbackRequest } from '../interfaces/IFeedbackRequests';
+import { IFeedbackRequest } from '../interfaces/IFeedbackRequest';
 import { IFeedback } from '../interfaces/IFeedback';
 
 export const feedbackApi = createApi({
@@ -12,7 +12,7 @@ export const feedbackApi = createApi({
       { providerId: string; message: string; expectedDate: string }
     >({
       query: (body) => ({
-        url: '/request',
+        url: '/feedback/request',
         method: 'POST',
         body,
       }),
@@ -28,7 +28,7 @@ export const feedbackApi = createApi({
       }
     >({
       query: (body) => ({
-        url: '/submit',
+        url: '/feedback/submit',
         method: 'POST',
         body,
       }),
@@ -38,10 +38,26 @@ export const feedbackApi = createApi({
       { requestId: string; reason: string }
     >({
       query: (body) => ({
-        url: '/reject',
+        url: '/feedback/reject',
         method: 'POST',
         body,
       }),
+    }),
+    getRequestsByStatus: builder.query<IFeedbackRequest[], { status: string }>({
+      query: ({ status }) => ({
+        url: '/feedback/requests',
+        params: { status },
+      }),
+    }),
+    sendReminder: builder.mutation<void, { requestId: string }>({
+      query: (body) => ({
+        url: '/feedback/reminder',
+        method: 'POST',
+        body,
+      }),
+    }),
+    getReceivedFeedback: builder.query<IFeedback[], void>({
+      query: () => '/feedback/received',
     }),
   }),
 });
@@ -50,4 +66,7 @@ export const {
   useCreateRequestMutation,
   useSubmitFeedbackMutation,
   useRejectFeedbackMutation,
+  useGetRequestsByStatusQuery,
+  useSendReminderMutation,
+  useGetReceivedFeedbackQuery,
 } = feedbackApi;

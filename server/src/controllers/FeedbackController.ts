@@ -9,7 +9,14 @@ const submitSchema = z.object({
   requestId: z.string().optional(),
   receiverId: z.string(),
   formId: z.string(),
-  responses: z.array(z.object({ fieldName: z.string(), value: z.any() })),
+  responses: z.array(
+    z.object({
+      fieldName: z.string(),
+      value: z.any().refine((val) => val !== null && val !== undefined, {
+        message: 'Value is required',
+      }),
+    })
+  ),
   isAnonymous: z.boolean(),
 });
 
@@ -32,12 +39,18 @@ export class FeedbackController {
       const providerId = req.user!._id;
       const tenantId = req.user!.tenantId;
 
+      // Map responses to ensure 'value' is mandatory
+      const mappedResponses = responses.map(({ fieldName, value }) => ({
+        fieldName,
+        value: value as any,
+      }));
+
       const feedback = await this.feedbackService.submitFeedback(
         requestId,
         receiverId,
         providerId,
         formId,
-        responses,
+        mappedResponses,
         isAnonymous,
         tenantId
       );
@@ -120,6 +133,31 @@ export class FeedbackController {
             errorResponse('VALIDATION_ERROR', 'Invalid input', error.errors)
           );
       }
+      if (error instanceof AppError) {
+        return res
+          .status(error.status)
+          .json(errorResponse(error.code, error.message));
+      }
+      return res
+        .status(500)
+        .json(errorResponse('SERVER_ERROR', 'Internal server error'));
+    }
+  }
+
+  async getReceivedFeedback(req: AuthRequest, res: Response) {
+    try {
+      const receiverId = req.user!._id;
+      const tenantId = req.user!.tenantId;
+
+      const feedback = await this.feedbackService.getReceivedFeedback(
+        receiverId,
+        tenantId
+      );
+
+      return res
+        .status(200)
+        .json(successResponse(feedback, 'Feedback fetched'));
+    } catch (error) {
       if (error instanceof AppError) {
         return res
           .status(error.status)

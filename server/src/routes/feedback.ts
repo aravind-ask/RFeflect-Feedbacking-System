@@ -71,4 +71,10 @@ router.post(
   feedbackController.recallFeedback.bind(feedbackController)
 );
 
+router.get(
+  '/received',
+  authenticate,
+  feedbackController.getReceivedFeedback.bind(feedbackController)
+);
+
 export default router;

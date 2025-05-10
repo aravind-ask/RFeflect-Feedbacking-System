@@ -1,7 +1,7 @@
 import { Schema, model } from 'mongoose';
 
 export interface IFeedback {
-  _id: string;
+  _id?: string;
   requestId?: string;
   receiverId: string;
   providerId: string;

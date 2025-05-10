@@ -21,4 +21,8 @@ export interface IFeedbackService {
     providerId: string,
     tenantId: string
   ): Promise<void>;
+  getReceivedFeedback(
+    receiverId: string,
+    tenantId: string
+  ): Promise<IFeedback[]>;
 }

@@ -2,10 +2,11 @@ import { IFeedbackService } from '../interfaces/IFeedbackService';
 import { IFeedbackRepository } from '../interfaces/IFeedbackRepository';
 import { IFeedbackRequestRepository } from '../interfaces/IFeedbackRequestRepository';
 import { IEmailService } from '../interfaces/IEmailService';
-import { IFeedbackForm } from '../models/feedbackForm';
+import { IFeedbackForm, FeedbackForm } from '../models/FeedbackForm';
 import { IFeedback, Feedback } from '../models/feedback';
 import { FeedbackRequest } from '../models/feedbackRequest';
 import { RBACSettings } from '../models/RBACSettings';
+import { User } from '../models/User';
 import {
   ValidationError,
   NotFoundError,
@@ -16,8 +17,7 @@ export class FeedbackService implements IFeedbackService {
   constructor(
     private feedbackRepo: IFeedbackRepository,
     private feedbackRequestRepo: IFeedbackRequestRepository,
-    private emailService: IEmailService,
-    private feedbackForm: IFeedbackForm
+    private emailService: IEmailService
   ) {}
 
   private calculateQualityScore(
@@ -25,15 +25,15 @@ export class FeedbackService implements IFeedbackService {
   ): number {
     let score = 0;
     responses.forEach((res) => {
-      if (typeof res.value === 'string' && res.value.length > 50) score += 30; // Long text responses
-      if (typeof res.value === 'number' && res.value >= 4) score += 20; // High ratings
+      if (typeof res.value === 'string' && res.value.length > 50) score += 30;
+      if (typeof res.value === 'number' && res.value >= 4) score += 20;
       if (
         typeof res.value === 'string' &&
         res.value.toLowerCase().includes('excellent')
       )
-        score += 50; // Keywords
+        score += 50;
     });
-    return Math.min(score, 100); // Cap at 100
+    return Math.min(score, 100);
   }
 
   async submitFeedback(
@@ -45,11 +45,10 @@ export class FeedbackService implements IFeedbackService {
     isAnonymous: boolean,
     tenantId: string
   ): Promise<IFeedback> {
-    const form = await this.feedbackForm.findById(formId);
+    const form = await FeedbackForm.findById(formId);
     if (!form) throw new NotFoundError('Feedback form not found');
 
-    // Validate responses against form fields
-    form.fields.forEach((field) => {
+    form.fields.forEach((field: { name: string; type: string; options?: string[]; required: boolean }) => {
       const response = responses.find((r) => r.fieldName === field.name);
       if (field.required && (!response || response.value == null)) {
         throw new ValidationError(`Field ${field.name} is required`);
@@ -138,5 +137,12 @@ export class FeedbackService implements IFeedbackService {
     }
 
     await this.feedbackRepo.update(feedbackId, { recalledAt: new Date() });
+  }
+
+  async getReceivedFeedback(
+    receiverId: string,
+    tenantId: string
+  ): Promise<IFeedback[]> {
+    return this.feedbackRepo.findByReceiverId(receiverId, tenantId);
   }
 }

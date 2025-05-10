@@ -100,7 +100,7 @@ export class FeedbackRequestService implements IFeedbackRequestService {
     // Mark expired requests
     const now = new Date();
     for (const request of requests) {
-      if (request.status === 'Pending' && request.expectedDate < now) {
+      if (request.status === 'Pending' && request.expectedDate < now && request._id) {
         await this.feedbackRequestRepo.update(request._id, {
           status: 'Expired',
         });

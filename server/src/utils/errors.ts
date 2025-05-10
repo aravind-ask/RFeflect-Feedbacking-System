@@ -5,11 +5,12 @@ export class AppError extends Error {
     public status: number
   ) {
     super(message);
+    this.name = this.constructor.name;
   }
 }
 
 export class ValidationError extends AppError {
-  constructor(message: string, details?: any) {
+  constructor(message: string) {
     super('VALIDATION_ERROR', message, 400);
   }
 }
@@ -28,6 +29,6 @@ export class UnauthorizedError extends AppError {
 
 export class RateLimitError extends AppError {
   constructor(message: string) {
-    super('RATE_LIMIT_EXCEEDED', message, 429);
+    super('RATE_LIMIT', message, 429);
   }
 }
